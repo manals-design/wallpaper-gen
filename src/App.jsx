@@ -26,6 +26,60 @@ const QUERIES = [
 const API = "https://api.artic.edu/api/v1/artworks/search";
 const IIIF = "https://www.artic.edu/iiif/2";
 
+// Shared icon button style
+const iconBtnBase = {
+  background: "rgba(255,255,255,0.15)",
+  backdropFilter: "blur(10px)",
+  WebkitBackdropFilter: "blur(10px)",
+  border: "1px solid rgba(255,255,255,0.2)",
+  borderRadius: 50,
+  cursor: "pointer",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  color: "rgba(255,255,255,0.9)",
+  transition: "all 0.25s ease",
+};
+
+const iconBtnHover = (e) => {
+  e.currentTarget.style.background = "rgba(255,255,255,0.28)";
+  e.currentTarget.style.borderColor = "rgba(255,255,255,0.45)";
+  e.currentTarget.style.transform = "translateY(-1px)";
+};
+
+const iconBtnLeave = (e) => {
+  e.currentTarget.style.background = "rgba(255,255,255,0.15)";
+  e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)";
+  e.currentTarget.style.transform = "translateY(0)";
+};
+
+const iconBtnDisabled = {
+  ...iconBtnBase,
+  opacity: 0.25,
+  cursor: "default",
+};
+
+// SVG Icons
+const ChevronLeft = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="15 18 9 12 15 6" />
+  </svg>
+);
+
+const ChevronRight = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="9 18 15 12 9 6" />
+  </svg>
+);
+
+const DownloadIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <polyline points="7 10 12 15 17 10" />
+    <line x1="12" y1="15" x2="12" y2="3" />
+  </svg>
+);
+
 export default function WallpaperApp() {
   const [walls, setWalls] = useState([]);
   const [idx, setIdx] = useState(-1);
@@ -245,6 +299,7 @@ export default function WallpaperApp() {
         backgroundColor: "#f8f8f6", fontFamily: mono, cursor: "default",
       }}>
 
+        {/* Wallpaper background */}
         {cur && (
           <div key={`bg-${idx}`} style={{
             position: "absolute", inset: 0,
@@ -255,6 +310,7 @@ export default function WallpaperApp() {
           }} />
         )}
 
+        {/* Vignette */}
         {hasWallpaper && (
           <div style={{
             position: "absolute", inset: 0, zIndex: 1, pointerEvents: "none",
@@ -262,47 +318,90 @@ export default function WallpaperApp() {
           }} />
         )}
 
-        {/* Center */}
+        {/* Center content */}
         <div style={{
           position: "absolute", inset: 0, display: "flex", flexDirection: "column",
           alignItems: "center", justifyContent: "center", zIndex: 10,
         }}>
-          <div
-            onClick={generate}
-            role="button"
-            tabIndex={0}
-            style={{
-              position: "relative", cursor: "pointer",
-              display: "flex", alignItems: "baseline",
-              animation: phase === "idle" ? "gentleBreath 5s ease-in-out infinite" : "none",
-            }}
-          >
-            {letters.map((letter, i) => (
-              <span
-                key={i}
+
+          {/* Generate + nav row */}
+          <div style={{
+            display: "flex", alignItems: "center", gap: 16,
+          }}>
+
+            {/* Back arrow */}
+            {walls.length > 1 && phase === "ready" && (
+              <button
+                onClick={e => { e.stopPropagation(); navigate(-1); }}
+                disabled={!canBack}
                 style={{
-                  fontFamily: mono,
-                  fontSize: "clamp(40px, 7vw, 82px)",
-                  fontWeight: 400,
-                  letterSpacing: "-0.03em",
-                  color: hasWallpaper ? "#fff" : "#1a1a1a",
-                  textShadow: hasWallpaper
-                    ? "0 2px 20px rgba(0,0,0,0.4), 0 0 50px rgba(0,0,0,0.12)"
-                    : "none",
-                  transition: "color 0.8s ease, text-shadow 0.8s ease",
-                  userSelect: "none",
-                  display: "inline-block",
-                  animation: isFloating
-                    ? `drift${i % 8} ${2 + (i % 4) * 0.35}s ease-in-out infinite`
-                    : "none",
-                  willChange: isFloating ? "transform" : "auto",
+                  ...(canBack ? iconBtnBase : iconBtnDisabled),
+                  width: 40, height: 40,
+                  animation: "fadeIn 0.3s ease",
                 }}
+                onMouseEnter={canBack ? iconBtnHover : undefined}
+                onMouseLeave={canBack ? iconBtnLeave : undefined}
               >
-                {letter}
-              </span>
-            ))}
+                <ChevronLeft />
+              </button>
+            )}
+
+            {/* Generate text */}
+            <div
+              onClick={generate}
+              role="button"
+              tabIndex={0}
+              style={{
+                position: "relative", cursor: "pointer",
+                display: "flex", alignItems: "baseline",
+                animation: phase === "idle" ? "gentleBreath 5s ease-in-out infinite" : "none",
+              }}
+            >
+              {letters.map((letter, i) => (
+                <span
+                  key={i}
+                  style={{
+                    fontFamily: mono,
+                    fontSize: "clamp(40px, 7vw, 82px)",
+                    fontWeight: 400,
+                    letterSpacing: "-0.03em",
+                    color: hasWallpaper ? "#fff" : "#1a1a1a",
+                    textShadow: hasWallpaper
+                      ? "0 2px 20px rgba(0,0,0,0.4), 0 0 50px rgba(0,0,0,0.12)"
+                      : "none",
+                    transition: "color 0.8s ease, text-shadow 0.8s ease",
+                    userSelect: "none",
+                    display: "inline-block",
+                    animation: isFloating
+                      ? `drift${i % 8} ${2 + (i % 4) * 0.35}s ease-in-out infinite`
+                      : "none",
+                    willChange: isFloating ? "transform" : "auto",
+                  }}
+                >
+                  {letter}
+                </span>
+              ))}
+            </div>
+
+            {/* Next arrow */}
+            {walls.length > 1 && phase === "ready" && (
+              <button
+                onClick={e => { e.stopPropagation(); navigate(1); }}
+                disabled={!canNext}
+                style={{
+                  ...(canNext ? iconBtnBase : iconBtnDisabled),
+                  width: 40, height: 40,
+                  animation: "fadeIn 0.3s ease",
+                }}
+                onMouseEnter={canNext ? iconBtnHover : undefined}
+                onMouseLeave={canNext ? iconBtnLeave : undefined}
+              >
+                <ChevronRight />
+              </button>
+            )}
           </div>
 
+          {/* Loading dots */}
           {phase === "loading" && (
             <div style={{
               display: "flex", gap: 6, marginTop: 18,
@@ -318,6 +417,7 @@ export default function WallpaperApp() {
             </div>
           )}
 
+          {/* Floating hint */}
           {isFloating && (
             <div style={{
               marginTop: 20, fontSize: 11, fontWeight: 300, letterSpacing: "0.08em",
@@ -330,53 +430,19 @@ export default function WallpaperApp() {
             </div>
           )}
 
+          {/* Error */}
           {errMsg && phase !== "floating" && phase !== "loading" && (
             <div style={{
               marginTop: 16, fontSize: 11, fontWeight: 300,
               color: hasWallpaper ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.25)",
-              animation: "fadeInUp 0.3s ease",
-              fontFamily: mono,
+              animation: "fadeInUp 0.3s ease", fontFamily: mono,
             }}>
               {errMsg}
             </div>
           )}
-
-          {walls.length > 1 && phase === "ready" && (
-            <div style={{
-              display: "flex", gap: 56, marginTop: 18,
-              animation: "fadeInUp 0.4s ease",
-            }}>
-              {[
-                { label: "Back", dir: -1, can: canBack },
-                { label: "Next", dir: 1, can: canNext },
-              ].map(({ label, dir, can }) => (
-                <button key={label}
-                  onClick={e => { e.stopPropagation(); navigate(dir); }}
-                  disabled={!can}
-                  style={{
-                    background: "none", border: "none",
-                    fontFamily: mono, fontSize: 12,
-                    fontWeight: 400, letterSpacing: "0.08em",
-                    color: hasWallpaper
-                      ? can ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.18)"
-                      : can ? "#666" : "#ccc",
-                    cursor: can ? "pointer" : "default",
-                    padding: "6px 12px",
-                    transition: "color 0.3s ease, transform 0.2s ease",
-                    textShadow: hasWallpaper ? "0 1px 8px rgba(0,0,0,0.3)" : "none",
-                    textTransform: "lowercase",
-                  }}
-                  onMouseEnter={e => can && (e.currentTarget.style.transform = "translateY(-1px)")}
-                  onMouseLeave={e => (e.currentTarget.style.transform = "translateY(0)")}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          )}
         </div>
 
-        {/* Artist credit */}
+        {/* Artist credit — bottom right */}
         {hasWallpaper && cur && (
           <div style={{
             position: "absolute", bottom: 22, right: 26, zIndex: 20,
@@ -384,63 +450,45 @@ export default function WallpaperApp() {
             animation: "fadeInUp 0.5s ease 0.12s both",
           }}>
             <div style={{
-              fontSize: 11, fontWeight: 400, color: "rgba(255,255,255,0.75)",
+              fontSize: 11, fontWeight: 400, color: "rgba(255,255,255,0.8)",
               letterSpacing: "0.03em", textShadow: "0 1px 8px rgba(0,0,0,0.45)",
               lineHeight: 1.6, fontFamily: mono,
             }}>
               {cur.artist}
             </div>
             <div style={{
-              fontSize: 9, fontWeight: 300, color: "rgba(255,255,255,0.4)",
+              fontSize: 9, fontWeight: 300, color: "rgba(255,255,255,0.45)",
               letterSpacing: "0.02em", textShadow: "0 1px 6px rgba(0,0,0,0.3)",
-              marginTop: 3, fontStyle: "italic", fontFamily: mono,
-              lineHeight: 1.5,
+              marginTop: 3, fontStyle: "italic", fontFamily: mono, lineHeight: 1.5,
             }}>
               {cur.title}{cur.date ? ` · ${cur.date}` : ""}
             </div>
           </div>
         )}
 
-        {/* Download */}
+        {/* Download button — top right */}
         {hasWallpaper && (
-          <button onClick={download} style={{
-            position: "absolute", top: 20, right: 24, zIndex: 20,
-            background: "rgba(255,255,255,0.07)",
-            backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)",
-            border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8,
-            padding: "8px 14px", cursor: "pointer",
-            display: "flex", alignItems: "center", gap: 7,
-            color: "rgba(255,255,255,0.8)", fontSize: 11,
-            fontFamily: mono, fontWeight: 400,
-            letterSpacing: "0.06em", transition: "all 0.3s ease",
-            animation: "fadeInUp 0.4s ease 0.2s both",
-            textTransform: "lowercase",
-          }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = "rgba(255,255,255,0.16)";
-              e.currentTarget.style.transform = "translateY(-1px)";
+          <button
+            onClick={download}
+            style={{
+              ...iconBtnBase,
+              position: "absolute", top: 20, right: 24, zIndex: 20,
+              width: 42, height: 42,
+              animation: "fadeInUp 0.4s ease 0.2s both",
             }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = "rgba(255,255,255,0.07)";
-              e.currentTarget.style.transform = "translateY(0)";
-            }}
+            onMouseEnter={iconBtnHover}
+            onMouseLeave={iconBtnLeave}
           >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            save
+            <DownloadIcon />
           </button>
         )}
 
-        {/* Counter */}
+        {/* Counter — bottom left */}
         {walls.length > 0 && phase === "ready" && (
           <div style={{
             position: "absolute", bottom: 22, left: 26, zIndex: 20,
             fontSize: 10, fontWeight: 300, fontVariantNumeric: "tabular-nums",
-            color: hasWallpaper ? "rgba(255,255,255,0.28)" : "rgba(0,0,0,0.18)",
+            color: hasWallpaper ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.18)",
             letterSpacing: "0.08em", fontFamily: mono,
             textShadow: hasWallpaper ? "0 1px 4px rgba(0,0,0,0.2)" : "none",
           }}>
@@ -464,8 +512,7 @@ export default function WallpaperApp() {
           <div style={{
             position: "absolute", bottom: 26, right: 26,
             fontSize: 9, fontWeight: 300, color: "rgba(0,0,0,0.13)",
-            letterSpacing: "0.08em", fontFamily: mono,
-            textTransform: "lowercase",
+            letterSpacing: "0.08em", fontFamily: mono, textTransform: "lowercase",
           }}>
             spacebar to generate
           </div>
